@@ -29,7 +29,9 @@ CONFIGS = {
         "down": "KEY_DOWN",
         "down_vi": 'j',
         "start": "KEY_HOME",
+        "start_vi": "g",
         "end": "KEY_END",
+        "end_vi": "G",
         "pageup": "KEY_PPAGE",
         "pagedown": "KEY_NPAGE",
         "enter": "KEY_ENTER",
@@ -315,8 +317,11 @@ class OPMLBrowser:
             keysrc = self.config[section]
         else:
             keysrc = self.config["keymap.default"]
-        for key in ("up", "up_vi", "down", "down_vi", "start", "end", "pageup",
-                    "pagedown", "enter", "stop", "exit", "favourite"):
+        for key in (
+                "up", "up_vi", "down", "down_vi", "start", "start_vi", "end",
+                "end_vi", "pageup", "pagedown", "enter", "stop", "exit",
+                "favourite"
+        ):
             value = keysrc.get(key, self.config["keymap.default"][key])
             if value.startswith("KEY_"):
                 keymap[key] = getattr(curses, value)
@@ -389,9 +394,9 @@ class OPMLBrowser:
                 self.move(rel=-1)
             elif ch == self.keymap["down"] or ch == self.keymap["down_vi"]:
                 self.move(rel=1)
-            elif ch == self.keymap["start"]:
+            elif ch == self.keymap["start"] or ch == self.keymap["start_vi"]:
                 self.move(to="start")
-            elif ch == self.keymap["end"]:
+            elif ch == self.keymap["end"] or ch == self.keymap["end_vi"]:
                 self.move(to="end")
             elif ch == self.keymap["pageup"]:  # page up
                 self.move(rel=-self.maxy)

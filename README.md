@@ -17,15 +17,15 @@ make test # tests the success installation
 ## Key Bindings
 You can use the keys below to navigate and select things in the `tui`. `vi`-like keys should work intuitively.
 
-Key(s)                                                     |                         Command
------------------------------------------------------------|--------------------------------
-<kbd>↑</kbd> or <kbd>k</kbd>, <kbd>↓</kbd> or <kbd>j</kbd> |                        navigate
-<kbd>PgUp</kbd>, <kbd>PgDn</kbd>                           |                navigate quickly
-<kbd>Home</kbd>, <kbd>End</kbd>                            |                   to top/bottom
-<kbd>Enter</kbd>                                           | open/close folders, play stream
-<kbd>s</kbd>                                               |             stop playing stream
-<kbd>q</kbd>                                               |                            quit
-<kbd>f</kbd>                                               |                toggle favourite
+Key(s)                                                           |                         Command
+-----------------------------------------------------------------|--------------------------------
+<kbd>↑</kbd> or <kbd>k</kbd>, <kbd>↓</kbd> or <kbd>j</kbd>       |                        navigate
+<kbd>PgUp</kbd> or <kbd>g</kbd>, <kbd>PgDn</kbd> or <kbd>G</kbd> |                navigate quickly
+<kbd>Home</kbd>, <kbd>End</kbd>                                  |                   to top/bottom
+<kbd>Enter</kbd>                                                 | open/close folders, play stream
+<kbd>s</kbd>                                                     |             stop playing stream
+<kbd>q</kbd>                                                     |                            quit
+<kbd>f</kbd>                                                     |                toggle favourite
 
 ## License
 `Curseradio-improved` is MIT-licensed (see [LICENSE.md](./LICENSE.md)).
