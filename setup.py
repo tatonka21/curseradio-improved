@@ -42,7 +42,7 @@ setup(
     url="https://github.com/DanielSchuette/curseradio-improved",
     packages=["curseradio_improved"],
     license="MIT",
-    requires=["lxml", "requests", "xdg"],
+    requires=["lxml", "requests", "pyxdg"],
     entry_points={
         "console_scripts":
         "curseradio-improved = curseradio_improved.__main__:main"
