@@ -13,12 +13,13 @@ Audio playback uses [mpv](http://mpv.io/). `Curseradio-improved` requires `pytho
 Install the module from `PyPI`:
 ```bash
 pip3 install curseradio-improved
+curseradio-improved # tests the success installation
 ```
 
-You can also install `curseradio-improved` by downloading the source code (or cloning this repository) and typing:
+You can also install `curseradio-improved` from source by cloning (or downloading the code from) this repository. Then type:
 ```bash
 make # might prompt for `sudo' password
-make test # tests the success installation
+curseradio-improved # tests the success installation
 ```
 
 ## Settings
@@ -34,7 +35,7 @@ You can use the keys below to navigate and select things in the `tui`. `vi`-like
 Key(s)                                                           |                         Command
 -----------------------------------------------------------------|--------------------------------
 <kbd>↑</kbd> or <kbd>k</kbd>, <kbd>↓</kbd> or <kbd>j</kbd>       |                        navigate
-<kbd>PgUp</kbd> or <kbd>p</kbd>, <kbd>PgDn</kbd> or <kbd>n</kbd> |                navigate quickly
+<kbd>PgUp</kbd> or <kbd>p</kbd>, <kbd>PgDn</kbd> or <kbd>n</kbd> |     navigate inbetween sections
 <kbd>Home</kbd> or <kbd>g</kbd>, <kbd>End</kbd> or <kbd>G</kbd>  |                   to top/bottom
 <kbd>Enter</kbd>                                                 | open/close folders, play stream
 <kbd>s</kbd>                                                     |             stop playing stream
@@ -42,4 +43,4 @@ Key(s)                                                           |              
 <kbd>f</kbd>                                                     |                toggle favourite
 
 ## License
-`Curseradio-improved` is MIT-licensed (see [LICENSE.md](./LICENSE.md)).
+`curseradio-improved` is MIT-licensed (see [LICENSE.md](./LICENSE.md)).
