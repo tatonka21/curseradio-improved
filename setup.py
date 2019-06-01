@@ -43,6 +43,10 @@ setup(
     packages=["curseradio_improved"],
     license="MIT",
     requires=["lxml", "requests", "pyxdg"],
+    python_requires=">=3.7",
+    package_data={
+        "curseradio_improved": ["configs.json"],
+    },
     entry_points={
         "console_scripts":
         "curseradio-improved = curseradio_improved.__main__:main"

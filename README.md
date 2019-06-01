@@ -22,7 +22,11 @@ make test # tests the success installation
 ```
 
 ## Settings
-Settings are parsed from `./curseradio-improved/configs.json`. This file serves as an example, colors and key bindings can be change to your liking, though. Additional settings like status bar display text will be configurable in the future.
+Settings are parsed from a `configs.json`. Currently, colors and key bindings can be change to your liking. Additional settings like status bar display text, section separators and more will be configurable in the future. To find the location of the settings file of your installation, type:
+
+```bash
+echo "$(pip3 show curseradio-improved | grep -i 'location' | awk '{ print $2 }')/curseradio_improved/configs.json"
+```
 
 ## Key Bindings
 You can use the keys below to navigate and select things in the `tui`. `vi`-like keys should work intuitively.

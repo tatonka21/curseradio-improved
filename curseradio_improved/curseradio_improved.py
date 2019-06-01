@@ -9,7 +9,6 @@ as `$mpv <stream-location>'.
 A favourites file (also stored as OPML) is written to
 `$XDG_DATA_HOME/curseradio_improved/favourites.opml'.
 """
-import configparser
 import curses
 import json
 import pathlib
@@ -292,14 +291,8 @@ class OPMLBrowser:
         """
         Load configuration from `json' file.
         """
-        json_configs = {}
         with open(path.join(path.dirname(__file__), name)) as f:
-            json_configs = json.loads(f.read())
-
-        config = configparser.ConfigParser(strict=True)
-        config.read_dict(json_configs)
-
-        return config
+            return json.loads(f.read())
 
     def get_keymap(self):
         """
