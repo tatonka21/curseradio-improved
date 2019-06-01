@@ -11,37 +11,14 @@ A favourites file (also stored as OPML) is written to
 """
 import configparser
 import curses
+import json
 import pathlib
 import subprocess
+from os import path
 
 import lxml.etree
 import requests
 import xdg.BaseDirectory
-
-# TODO: Configs should be json and go in separate file
-CONFIGS = {
-    "opml": {"root": "http://opml.radiotime.com/"},
-    'playback': {"command": "/usr/bin/mpv"},
-    "interface": {"keymap": "default"},
-    "keymap.default": {
-        "up": "KEY_UP",
-        "up_vi": 'k',
-        "down": "KEY_DOWN",
-        "down_vi": 'j',
-        "start": "KEY_HOME",
-        "start_vi": "g",
-        "end": "KEY_END",
-        "end_vi": "G",
-        "pageup": "KEY_PPAGE",
-        "pageup_vi": 'p',
-        "pagedown": "KEY_NPAGE",
-        "pagedown_vi": 'n',
-        "enter": "KEY_ENTER",
-        "stop": 's',
-        "exit": 'q',
-        "favourite": 'f'  # TODO: f should search streams
-    }
-}
 
 
 class OPMLNode:
@@ -293,12 +270,13 @@ class OPMLBrowser:
         curses.use_default_colors()
 
         curses.curs_set(0)  # hide cursor
+        self.init_colors()  # initialize colors
         self.display()  # display starting screen
         self.interact()  # main loop
 
     def load_favourites(self):
-        for path in xdg.BaseDirectory.load_data_paths("curseradio_improved"):
-            opmlpath = pathlib.Path(path, "favourites.opml")
+        for p in xdg.BaseDirectory.load_data_paths("curseradio_improved"):
+            opmlpath = pathlib.Path(p, "favourites.opml")
             if opmlpath.exists():
                 return OPMLFavourites.from_xml(str(opmlpath))
         return OPMLFavourites("", {})
@@ -310,37 +288,68 @@ class OPMLBrowser:
             opml = lxml.etree.ElementTree(self.favourites.to_xml())
             opml.write(str(opmlpath))
 
-    def load_config(self):
+    def load_config(self, name="configs.json"):
+        """
+        Load configuration from `json' file.
+        """
+        json_configs = {}
+        with open(path.join(path.dirname(__file__), name)) as f:
+            json_configs = json.loads(f.read())
+
         config = configparser.ConfigParser(strict=True)
-        config.read_dict(CONFIGS)
-        for path in xdg.BaseDirectory.load_config_paths("curseradio_improved"):
-            configpath = pathlib.Path(path, "curseradio_improved.cfg")
-            if configpath.exists():
-                config.read(str(configpath))
+        config.read_dict(json_configs)
+
         return config
 
     def get_keymap(self):
         """
-        TODO: simplify this section.
+        Get key mappings from configs.
         """
         keymap = {}
-        chosen = self.config["interface"]["keymap"]
-        section = "keymap.{}".format(chosen)
-        if self.config.has_section(section):
-            keysrc = self.config[section]
-        else:
-            keysrc = self.config["keymap.default"]
+
         for key in (
                 "up", "up_vi", "down", "down_vi", "start", "start_vi", "end",
                 "end_vi", "pageup", "pageup_vi", "pagedown", "pagedown_vi",
                 "enter", "stop", "exit", "favourite"
         ):
-            value = keysrc.get(key, self.config["keymap.default"][key])
+            value = self.config["keymap"][key]
             if value.startswith("KEY_"):
                 keymap[key] = getattr(curses, value)
             else:
                 keymap[key] = ord(value)
         return keymap
+
+    def init_colors(self):
+        """
+        Initialize curses colors.
+        """
+        self.colors = {}
+        for i in range(curses.COLORS):
+            curses.init_pair(i + 1, i, -1)
+        self.colors["white"] = curses.color_pair(0)
+        self.colors["black"] = curses.color_pair(1)
+        self.colors["red"] = curses.color_pair(2)
+        self.colors["green"] = curses.color_pair(3)
+        self.colors["yellow"] = curses.color_pair(4)
+        self.colors["blue"] = curses.color_pair(5)
+        self.colors["margenta"] = curses.color_pair(6)
+        self.colors["cyan"] = curses.color_pair(7)
+
+        # background colors
+        curses.init_pair(8, curses.COLOR_BLACK, curses.COLOR_WHITE)
+        curses.init_pair(9, curses.COLOR_BLACK, curses.COLOR_GREEN)
+        curses.init_pair(10, curses.COLOR_BLACK, curses.COLOR_RED)
+        curses.init_pair(11, curses.COLOR_BLACK, curses.COLOR_CYAN)
+        curses.init_pair(12, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+        curses.init_pair(13, curses.COLOR_BLACK, curses.COLOR_BLUE)
+        curses.init_pair(14, curses.COLOR_BLACK, curses.COLOR_MAGENTA)
+        self.colors["inverted"] = curses.color_pair(8)
+        self.colors["green-bg"] = curses.color_pair(9)
+        self.colors["red-bg"] = curses.color_pair(10)
+        self.colors["cyan-bg"] = curses.color_pair(11)
+        self.colors["yellow-bg"] = curses.color_pair(12)
+        self.colors["blue-bg"] = curses.color_pair(13)
+        self.colors["margenta-bg"] = curses.color_pair(14)
 
     def display(self, msg=None):
         """
@@ -351,9 +360,10 @@ class OPMLBrowser:
         width0 = 6*(self.maxx - 10)//10
         width1 = 4*(self.maxx - 10)//10
 
-        # the color of a selected item
-        curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-        selected_style = curses.color_pair(1)
+        # the color of a selected item, message and the status bar
+        selected_style = self.colors[self.config["colors"]["selected-item"]]
+        msg_style = self.colors[self.config["colors"]["message"]]
+        status_style = self.colors[self.config["colors"]["statusbar"]]
 
         showobjs = self.flat[self.top:self.top+self.maxy-1]
         for i, (obj, depth) in enumerate(showobjs):
@@ -366,10 +376,10 @@ class OPMLBrowser:
 
         if msg is not None:
             self.screen.addstr(self.maxy-1, 0,
-                               msg[:self.maxx-1], curses.A_BOLD)
+                               msg[:self.maxx-1], msg_style)
         else:
             self.screen.addstr(self.maxy-1, 0,
-                               self.status[:self.maxx-1], curses.A_BOLD)
+                               self.status[:self.maxx-1], status_style)
 
         self.screen.refresh()
         curses.doupdate()
