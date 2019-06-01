@@ -3,18 +3,11 @@
 Curses application for navigating and playing radio streams (using the
 tunein directory at http://opml.radiotime.com/).
 
-Uses `mpv` to play streams. Works for any stream which works when invoked
-as `mpv <stream-location>`.
+Uses `mpv' to play streams. Works for any stream which works when invoked
+as `$mpv <stream-location>'.
 
 A favourites file (also stored as OPML) is written to
-$XDG_DATA_HOME/curseradio_improved/favourites.opml
-
-Controls:
- * UP, DOWN, PAGEUP, PAGEDOWN, HOME, END - navigate the source list
- * ENTER - expand/contract items, play streams
- * q - exit
- * k - kill the current stream
- * f - mark as favourite
+`$XDG_DATA_HOME/curseradio_improved/favourites.opml'.
 """
 import configparser
 import curses
@@ -25,21 +18,24 @@ import lxml.etree
 import requests
 import xdg.BaseDirectory
 
-CONFIG_DEFAULT = {
-    'opml': {'root': "http://opml.radiotime.com/"},
-    'playback': {'command': '/usr/bin/mpv'},
-    'interface': {'keymap': 'default'},
-    'keymap.default': {
-        'up': 'KEY_UP',
-        'down': 'KEY_DOWN',
-        'start': 'KEY_HOME',
-        'end': 'KEY_END',
-        'pageup': 'KEY_PPAGE',
-        'pagedown': 'KEY_NPAGE',
-        'enter': 'KEY_ENTER',
-        'stop': 'k',
-        'exit': 'q',
-        'favourite': 'f'
+# TODO: Configs should be json and go in separate file
+CONFIGS = {
+    "opml": {"root": "http://opml.radiotime.com/"},
+    'playback': {"command": "/usr/bin/mpv"},
+    "interface": {"keymap": "default"},
+    "keymap.default": {
+        "up": "KEY_UP",
+        "up_vi": 'k',
+        "down": "KEY_DOWN",
+        "down_vi": 'j',
+        "start": "KEY_HOME",
+        "end": "KEY_END",
+        "pageup": "KEY_PPAGE",
+        "pagedown": "KEY_NPAGE",
+        "enter": "KEY_ENTER",
+        "stop": 's',
+        "exit": 'q',
+        "favourite": 'f'  # TODO: f should search streams
     }
 }
 
@@ -60,7 +56,7 @@ class OPMLNode:
         tree = lxml.etree.parse(url)
         result = cls(text=text, attr=attr)
         result.children = [OPMLNode.from_element(o)
-                           for o in tree.xpath('/opml/body/outline')]
+                           for o in tree.xpath("/opml/body/outline")]
         return result
 
     @classmethod
@@ -73,15 +69,15 @@ class OPMLNode:
 
         TODO: Support other leaf element types.
         """
-        text = element.get('text')
+        text = element.get("text")
         attr = dict(element.attrib)
-        type = attr.get('type', None)
+        type = attr.get("type", None)
         if type is None and len(element) > 0:
             type = "outline"
 
         if type == "outline":
             node = OPMLOutline(text=text, attr=attr)
-            for child in element.xpath('./outline'):
+            for child in element.xpath("./outline"):
                 node.children.append(cls.from_element(child))
         elif type == "link":
             node = OPMLOutlineLink(text=text, attr=attr)
@@ -147,22 +143,22 @@ class OPMLAudio(OPMLNode):
     def __init__(self, text, attr):
         self.text = text
         self.attr = attr
-        self.url = attr['URL']
-        self.bitrate = int(attr.get('bitrate', 0))
-        self.reliability = int(attr.get('reliability', 0))
-        self.formats = attr.get('formats', '')
+        self.url = attr["URL"]
+        self.bitrate = int(attr.get("bitrate", 0))
+        self.reliability = int(attr.get("reliability", 0))
+        self.formats = attr.get("formats", "")
         self.leaf = True
-        if 'current_track' in attr:
-            self.secondary = attr['current_track']
-        elif 'subtext' in attr:
-            self.secondary = attr['subtext']
+        if "current_track" in attr:
+            self.secondary = attr["current_track"]
+        elif "subtext" in attr:
+            self.secondary = attr["subtext"]
         else:
             self.secondary = ""
 
     def activate(self):
         yield "Fetching playlist"
         r = requests.get(self.url)
-        playlist = r.text.split("\n")[0]
+        playlist = r.text.split('\n')[0]
         yield [playlist]
 
     def render(self):
@@ -212,7 +208,7 @@ class OPMLOutlineLink(OPMLOutline):
 
     def __init__(self, text, attr):
         super().__init__(text, attr)
-        self.url = attr['URL']
+        self.url = attr["URL"]
         self.ready = False
 
     def activate(self):
@@ -301,7 +297,7 @@ class OPMLBrowser:
 
     def load_config(self):
         config = configparser.ConfigParser(strict=True)
-        config.read_dict(CONFIG_DEFAULT)
+        config.read_dict(CONFIGS)
         for path in xdg.BaseDirectory.load_config_paths("curseradio_improved"):
             configpath = pathlib.Path(path, "curseradio_improved.cfg")
             if configpath.exists():
@@ -309,17 +305,20 @@ class OPMLBrowser:
         return config
 
     def get_keymap(self):
+        """
+        TODO: simplify this section.
+        """
         keymap = {}
-        chosen = self.config['interface']['keymap']
-        section = 'keymap.{}'.format(chosen)
+        chosen = self.config["interface"]["keymap"]
+        section = "keymap.{}".format(chosen)
         if self.config.has_section(section):
             keysrc = self.config[section]
         else:
-            keysrc = self.config['keymap.default']
-        for key in ('up', 'down', 'start', 'end', 'pageup', 'pagedown',
-                    'enter', 'stop', 'exit', 'favourite'):
-            value = keysrc.get(key, self.config['keymap.default'][key])
-            if value.startswith('KEY_'):
+            keysrc = self.config["keymap.default"]
+        for key in ("up", "up_vi", "down", "down_vi", "start", "end", "pageup",
+                    "pagedown", "enter", "stop", "exit", "favourite"):
+            value = keysrc.get(key, self.config["keymap.default"][key])
+            if value.startswith("KEY_"):
                 keymap[key] = getattr(curses, value)
             else:
                 keymap[key] = ord(value)
@@ -386,19 +385,19 @@ class OPMLBrowser:
             ch = self.screen.getch()
             if ch == curses.KEY_RESIZE:
                 self.maxy, self.maxx = self.screen.getmaxyx()
-            elif ch == self.keymap['up']:
+            elif ch == self.keymap["up"] or ch == self.keymap["up_vi"]:
                 self.move(rel=-1)
-            elif ch == self.keymap['down']:
+            elif ch == self.keymap["down"] or ch == self.keymap["down_vi"]:
                 self.move(rel=1)
-            elif ch == self.keymap['start']:
+            elif ch == self.keymap["start"]:
                 self.move(to="start")
-            elif ch == self.keymap['end']:
+            elif ch == self.keymap["end"]:
                 self.move(to="end")
-            elif ch == self.keymap['pageup']:  # page up
+            elif ch == self.keymap["pageup"]:  # page up
                 self.move(rel=-self.maxy)
-            elif ch == self.keymap['pagedown']:  # page down
+            elif ch == self.keymap["pagedown"]:  # page down
                 self.move(rel=self.maxy)
-            elif ch == self.keymap['enter'] or ch == ord('\n'):
+            elif ch == self.keymap["enter"] or ch == ord('\n'):
                 for msg in self.selected.activate():
                     if isinstance(msg, str):
                         self.display(msg=msg)
@@ -416,17 +415,17 @@ class OPMLBrowser:
 
                 self.flat = self.root.flatten([])
                 self.move(rel=0)
-            elif ch == self.keymap['exit']:
+            elif ch == self.keymap["exit"]:
                 if self.child is not None:
                     self.child.terminate()
                     self.child.wait()
                 self.save_favourites()
                 return
-            elif ch == self.keymap['stop']:
+            elif ch == self.keymap["stop"]:
                 if self.child is not None:
                     self.child.terminate()
                     self.child.wait()
-            elif ch == self.keymap['favourite']:
+            elif ch == self.keymap["favourite"]:
                 self.favourites.toggle(self.selected)
                 self.flat = self.root.flatten([])
                 self.move(rel=0)
