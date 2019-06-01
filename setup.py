@@ -1,26 +1,31 @@
 #!/usr/bin/env python3
-
-from setuptools import setup
 import os
 
-__version__ = None
+from setuptools import setup
 
-with open(os.path.join(os.path.dirname(__file__), "curseradio", "__init__.py")) as f:
+__version__ = None
+description = "An improved Curses interface for listening to internet radio."
+
+with open(
+        os.path.join(os.path.dirname(__file__),
+                     "curseradio_improved", "__init__.py")
+) as f:
     for line in f.readlines():
         if line.startswith("__version__"):
             exec(line)
 
 setup(
-    name="curseradio",
+    name="curseradio-improved",
     version=__version__,
-    description="Curses interface for browsing and playing internet radio",
-    author="Gordon Ball",
-    author_email="gordon@chronitis.net",
-    url="https://github.com/chronitis/curseradio",
-    packages=["curseradio"],
+    description=description,
+    author="Gordon Ball, Daniel Schuette",
+    author_email="gordon@chronitis.net, d.schuette@online.de",
+    url="https://github.com/DanielSchuette/curseradio-improved",
+    packages=["curseradio_improved"],
     license="MIT",
     requires=["lxml", "requests", "pyxdg"],
     entry_points={
-        'console_scripts': 'curseradio = curseradio.__main__:main'
+        "console_scripts":
+        "curseradio-improved = curseradio_improved.__main__:main"
     }
 )

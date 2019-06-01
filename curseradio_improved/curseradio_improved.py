@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-
+#!/bin/python3
 """
 Curses application for navigating and playing radio streams (using the
 tunein directory at http://opml.radiotime.com/).
@@ -8,7 +7,7 @@ Uses `mpv` to play streams. Works for any stream which works when invoked
 as `mpv <stream-location>`.
 
 A favourites file (also stored as OPML) is written to
-$XDG_DATA_HOME/curseradio/favourites.opml
+$XDG_DATA_HOME/curseradio_improved/favourites.opml
 
 Controls:
  * UP, DOWN, PAGEUP, PAGEDOWN, HOME, END - navigate the source list
@@ -17,16 +16,14 @@ Controls:
  * k - kill the current stream
  * f - mark as favourite
 """
-
+import configparser
 import curses
+import pathlib
 import subprocess
+
 import lxml.etree
 import requests
-import pathlib
 import xdg.BaseDirectory
-import configparser
-import re
-
 
 CONFIG_DEFAULT = {
     'opml': {'root': "http://opml.radiotime.com/"},
@@ -58,7 +55,8 @@ class OPMLNode:
         children set to all the outlines contained in the file. (The header
         is currently discarded).
         """
-        if attr is None: attr = {}
+        if attr is None:
+            attr = {}
         tree = lxml.etree.parse(url)
         result = cls(text=text, attr=attr)
         result.children = [OPMLNode.from_element(o)
@@ -105,14 +103,14 @@ class OPMLNode:
          * data0 (4 chars)
          * data1 (5 chars)
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def activate(self):
         """
         Action when the item is selected and enter pressed. Yield either
         strings (progress messages) or a list (command list for popen).
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def flatten(self, result, depth=0):
         """
@@ -145,6 +143,7 @@ class OPMLAudio(OPMLNode):
     player command. `bitrate`, `reliability`, `current_track` and `subtext`
     attributes are considered.
     """
+
     def __init__(self, text, attr):
         self.text = text
         self.attr = attr
@@ -175,6 +174,7 @@ class OPMLOutline(OPMLNode):
     """
     Simple branch-level element, filled from the host file at creation time.
     """
+
     def __init__(self, text, attr):
         self.text = text
         self.attr = attr
@@ -209,6 +209,7 @@ class OPMLOutlineLink(OPMLOutline):
     Branch level node with type=link. Upon activation, the URL is fetched,
     parsed as OPML and all top-level outlines added as children of this node.
     """
+
     def __init__(self, text, attr):
         super().__init__(text, attr)
         self.url = attr['URL']
@@ -223,11 +224,13 @@ class OPMLOutlineLink(OPMLOutline):
             yield "Loading... done"
         self.collapsed = not self.collapsed
 
+
 class OPMLFavourites(OPMLOutline):
     """
     A special outline subclass representing a locally stored favourites list
     which tracks whether it has been altered so it can be saved if necessary.
     """
+
     def __init__(self, text, attr):
         super().__init__("Favourites", {})
         self.dirty = False
@@ -251,11 +254,13 @@ class OPMLFavourites(OPMLOutline):
             body.append(c.to_element())
         return opml
 
+
 class OPMLBrowser:
     """
     Curses browser for an OPML tree. Includes simple keyboard navigation
     and launching child commands based on OPML leaf nodes.
     """
+
     def __init__(self, screen):
         """
         This is intended to be invoked using curses.wrapper. The first
@@ -276,18 +281,19 @@ class OPMLBrowser:
         self.child = None
         self.status = ""
 
+        curses.use_default_colors()
         self.display()
         self.interact()
 
     def load_favourites(self):
-        for path in xdg.BaseDirectory.load_data_paths("curseradio"):
+        for path in xdg.BaseDirectory.load_data_paths("curseradio_improved"):
             opmlpath = pathlib.Path(path, "favourites.opml")
             if opmlpath.exists():
                 return OPMLFavourites.from_xml(str(opmlpath))
         return OPMLFavourites("", {})
 
     def save_favourites(self):
-        path = xdg.BaseDirectory.save_data_path("curseradio")
+        path = xdg.BaseDirectory.save_data_path("curseradio_improved")
         if self.favourites.dirty:
             opmlpath = pathlib.Path(path, "favourites.opml")
             opml = lxml.etree.ElementTree(self.favourites.to_xml())
@@ -296,8 +302,8 @@ class OPMLBrowser:
     def load_config(self):
         config = configparser.ConfigParser(strict=True)
         config.read_dict(CONFIG_DEFAULT)
-        for path in xdg.BaseDirectory.load_config_paths("curseradio"):
-            configpath = pathlib.Path(path, "curseradio.cfg")
+        for path in xdg.BaseDirectory.load_config_paths("curseradio_improved"):
+            configpath = pathlib.Path(path, "curseradio_improved.cfg")
             if configpath.exists():
                 config.read(str(configpath))
         return config
@@ -402,8 +408,10 @@ class OPMLBrowser:
                             self.child.wait()
 
                         command = [self.config['playback']['command']] + msg
-                        self.child = subprocess.Popen(command, stdout=subprocess.DEVNULL,
-                                                      stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+                        self.child = subprocess.Popen(
+                            command, stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL
+                        )
                         self.status = "Playing {}".format(self.selected.text)
 
                 self.flat = self.root.flatten([])

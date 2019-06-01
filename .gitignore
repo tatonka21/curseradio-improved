@@ -1,3 +1,6 @@
+# ignore python bytecode and build files
 __pycache__/
 *.pyc
-/build
+build/
+dist/
+curseradio_improved.egg-info
