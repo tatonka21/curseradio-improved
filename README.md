@@ -21,6 +21,9 @@ make # might prompt for `sudo' password
 make test # tests the success installation
 ```
 
+## Settings
+Settings are parsed from `./curseradio-improved/configs.json`. This file serves as an example, colors and key bindings can be change to your liking, though. Additional settings like status bar display text will be configurable in the future.
+
 ## Key Bindings
 You can use the keys below to navigate and select things in the `tui`. `vi`-like keys should work intuitively.
 
