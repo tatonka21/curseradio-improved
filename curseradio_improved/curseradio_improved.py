@@ -33,7 +33,9 @@ CONFIGS = {
         "end": "KEY_END",
         "end_vi": "G",
         "pageup": "KEY_PPAGE",
+        "pageup_vi": 'p',
         "pagedown": "KEY_NPAGE",
+        "pagedown_vi": 'n',
         "enter": "KEY_ENTER",
         "stop": 's',
         "exit": 'q',
@@ -192,8 +194,15 @@ class OPMLOutline(OPMLNode):
         return result
 
     def render(self):
-        return ("{} {}".format("+" if self.collapsed else "-", self.text),
-                "", "", "")
+        """
+        Render display text, respecting the edge case of the tree root.
+        """
+        if self.text != "":
+            return ("{} {}".format("+" if self.collapsed else "-", self.text),
+                    "", "", "")
+        else:
+            return ("{}".format("+" if self.collapsed else "-"),
+                    "", "", "")
 
     def to_element(self):
         elem = super().to_element()
@@ -279,9 +288,13 @@ class OPMLBrowser:
         self.child = None
         self.status = ""
 
+        # prevent custom color schemes (e.g. in Gnome term) from messing up the
+        # background color
         curses.use_default_colors()
-        self.display()
-        self.interact()
+
+        curses.curs_set(0)  # hide cursor
+        self.display()  # display starting screen
+        self.interact()  # main loop
 
     def load_favourites(self):
         for path in xdg.BaseDirectory.load_data_paths("curseradio_improved"):
@@ -319,8 +332,8 @@ class OPMLBrowser:
             keysrc = self.config["keymap.default"]
         for key in (
                 "up", "up_vi", "down", "down_vi", "start", "start_vi", "end",
-                "end_vi", "pageup", "pagedown", "enter", "stop", "exit",
-                "favourite"
+                "end_vi", "pageup", "pageup_vi", "pagedown", "pagedown_vi",
+                "enter", "stop", "exit", "favourite"
         ):
             value = keysrc.get(key, self.config["keymap.default"][key])
             if value.startswith("KEY_"):
@@ -338,10 +351,14 @@ class OPMLBrowser:
         width0 = 6*(self.maxx - 10)//10
         width1 = 4*(self.maxx - 10)//10
 
+        # the color of a selected item
+        curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+        selected_style = curses.color_pair(1)
+
         showobjs = self.flat[self.top:self.top+self.maxy-1]
         for i, (obj, depth) in enumerate(showobjs):
             text = obj.render()
-            style = curses.A_BOLD if i == self.cursor else curses.A_NORMAL
+            style = selected_style if i == self.cursor else curses.A_NORMAL
             self.screen.addstr(i, depth*2, text[0][:width0-depth*2], style)
             self.screen.addstr(i, width0+2, text[1][:width1-4])
             self.screen.addstr(i, width0+width1, text[2][:4])
@@ -398,9 +415,11 @@ class OPMLBrowser:
                 self.move(to="start")
             elif ch == self.keymap["end"] or ch == self.keymap["end_vi"]:
                 self.move(to="end")
-            elif ch == self.keymap["pageup"]:  # page up
+            elif ch == self.keymap["pageup"] or ch == self.keymap["pageup_vi"]:
                 self.move(rel=-self.maxy)
-            elif ch == self.keymap["pagedown"]:  # page down
+            elif ch == self.keymap["pagedown"] or ch == self.keymap[
+                "pagedown_vi"
+            ]:
                 self.move(rel=self.maxy)
             elif ch == self.keymap["enter"] or ch == ord('\n'):
                 for msg in self.selected.activate():
@@ -440,4 +459,4 @@ class OPMLBrowser:
                     self.child = None
                     self.status = ""
 
-            self.display()
+            self.display()  # render the new screen

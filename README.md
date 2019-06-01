@@ -20,8 +20,8 @@ You can use the keys below to navigate and select things in the `tui`. `vi`-like
 Key(s)                                                           |                         Command
 -----------------------------------------------------------------|--------------------------------
 <kbd>↑</kbd> or <kbd>k</kbd>, <kbd>↓</kbd> or <kbd>j</kbd>       |                        navigate
-<kbd>PgUp</kbd> or <kbd>g</kbd>, <kbd>PgDn</kbd> or <kbd>G</kbd> |                navigate quickly
-<kbd>Home</kbd>, <kbd>End</kbd>                                  |                   to top/bottom
+<kbd>PgUp</kbd>, <kbd>PgDn</kbd>                                 |                navigate quickly
+<kbd>Home</kbd> or <kbd>g</kbd>, <kbd>End</kbd> or <kbd>G</kbd>  |                   to top/bottom
 <kbd>Enter</kbd>                                                 | open/close folders, play stream
 <kbd>s</kbd>                                                     |             stop playing stream
 <kbd>q</kbd>                                                     |                            quit
