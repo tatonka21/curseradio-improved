@@ -16,6 +16,7 @@ make test # tests the success installation
 
 ## Key Bindings
 You can use the keys below to navigate and select things in the `tui`. `vi`-like keys should work intuitively.
+
 Key(s)                                                     |                         Command
 -----------------------------------------------------------|--------------------------------
 <kbd>↑</kbd> or <kbd>k</kbd>, <kbd>↓</kbd> or <kbd>j</kbd> |                        navigate
