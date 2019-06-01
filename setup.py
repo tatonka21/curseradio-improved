@@ -14,16 +14,35 @@ with open(
         if line.startswith("__version__"):
             exec(line)
 
+
+def readme():
+    """
+    Import README.md as a long package description.
+    """
+    with open(
+            os.path.join(os.path.dirname(__file__),
+                         "README.md"), encoding="utf-8"
+    ) as f:
+        return f.read()
+
+
 setup(
     name="curseradio-improved",
     version=__version__,
     description=description,
-    author="Gordon Ball, Daniel Schuette",
-    author_email="gordon@chronitis.net, d.schuette@online.de",
+    long_description=readme(),
+    long_description_content_type="text/markdown",
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3.7",
+    ],
+    author="Daniel Schuette",
+    author_email="d.schuette@online.de",
     url="https://github.com/DanielSchuette/curseradio-improved",
     packages=["curseradio_improved"],
     license="MIT",
-    requires=["lxml", "requests", "pyxdg"],
+    requires=["lxml", "requests", "xdg"],
     entry_points={
         "console_scripts":
         "curseradio-improved = curseradio_improved.__main__:main"
