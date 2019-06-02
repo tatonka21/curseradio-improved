@@ -141,7 +141,11 @@ class OPMLAudio(OPMLNode):
         playlist = r.text.split('\n')[0]
         yield [playlist]
 
-    def render(self):
+    def render(self, open_delim, close_delim):
+        """
+        Called for every audio leave node on drawing. `open_delim' and
+        `close_delim' are not used.
+        """
         return (self.text, self.secondary,
                 "{}k".format(self.bitrate), '|'*(self.reliability//20))
 
@@ -169,15 +173,16 @@ class OPMLOutline(OPMLNode):
                 c.flatten(result, depth+1)
         return result
 
-    def render(self):
+    def render(self, open_delim, close_delim):
         """
         Render display text, respecting the edge case of the tree root.
         """
         if self.text != "":
-            return ("{} {}".format("+" if self.collapsed else "-", self.text),
-                    "", "", "")
+            return ("{} {}".format(
+                open_delim if self.collapsed else close_delim, self.text
+            ), "", "", "")
         else:
-            return ("{}".format("+" if self.collapsed else "-"),
+            return ("{}".format(open_delim if self.collapsed else close_delim),
                     "", "", "")
 
     def to_element(self):
@@ -264,6 +269,12 @@ class OPMLBrowser:
         self.child = None
         self.status = ""
 
+        # UI settings
+        self.xmargin = 1
+        self.ymargin = 1
+        self.status_xmargin = 3
+        self.status_ymargin = 3
+
         # prevent custom color schemes (e.g. in Gnome term) from messing up the
         # background color
         curses.use_default_colors()
@@ -344,9 +355,30 @@ class OPMLBrowser:
         self.colors["blue-bg"] = curses.color_pair(13)
         self.colors["margenta-bg"] = curses.color_pair(14)
 
+    def draw_outline(self):
+        """
+        Draw an outline around the UI.
+        """
+        color = self.colors[self.config["outline-color"]]
+        self.screen.addstr(0, 0, "┌", color)
+        self.screen.addstr(0, self.maxx-1, "┐", color)
+        self.screen.addstr(self.maxy-2, self.maxx-1, "┘", color)
+        self.screen.addstr(self.maxy-2, 0, "└", color)
+        for i in range(1, self.maxx-1):
+            self.screen.addstr(0, i, "─", color)
+            self.screen.addstr(self.maxy-2, i, "─", color)
+        for i in range(1, self.maxy-2):
+            self.screen.addstr(i, 0, "│", color)
+            self.screen.addstr(i, self.maxx-1, "│", color)
+
+        # draw title
+        title = " Curseradio - Improved "
+        self.screen.addstr(0, self.maxx//2-len(title)//2, title,
+                           self.colors[self.config["title-color"]])
+
     def display(self, msg=None):
         """
-        Redraw the screen, possibly showing a message on the bottom row.
+        Redraw the screen, possibly showing a message or the status bar.
         """
         self.screen.clear()
 
@@ -358,20 +390,28 @@ class OPMLBrowser:
         msg_style = self.colors[self.config["colors"]["message"]]
         status_style = self.colors[self.config["colors"]["statusbar"]]
 
-        showobjs = self.flat[self.top:self.top+self.maxy-1]
+        self.draw_outline()
+
+        showobjs = self.flat[self.top:self.top+self.maxy-self.status_ymargin-2]
         for i, (obj, depth) in enumerate(showobjs):
-            text = obj.render()
+            text = obj.render(
+                self.config["opened_delimiter"],
+                self.config["closed_delimiter"]
+            )
             style = selected_style if i == self.cursor else curses.A_NORMAL
-            self.screen.addstr(i, depth*2, text[0][:width0-depth*2], style)
-            self.screen.addstr(i, width0+2, text[1][:width1-4])
-            self.screen.addstr(i, width0+width1, text[2][:4])
-            self.screen.addstr(i, width0+width1+5, text[3][:5])
+            self.screen.addstr(i+self.ymargin, depth*2+self.xmargin,
+                               text[0][:width0-depth*2], style)
+            self.screen.addstr(i+self.ymargin, width0+2, text[1][:width1-4])
+            self.screen.addstr(i+self.ymargin, width0+width1, text[2][:4])
+            self.screen.addstr(i+self.ymargin, width0+width1+5, text[3][:5])
 
         if msg is not None:
-            self.screen.addstr(self.maxy-1, 0,
+            self.screen.addstr(self.maxy-self.status_ymargin,
+                               0+self.status_xmargin,
                                msg[:self.maxx-1], msg_style)
         else:
-            self.screen.addstr(self.maxy-1, 0,
+            self.screen.addstr(self.maxy-self.status_ymargin,
+                               0+self.status_xmargin,
                                self.status[:self.maxx-1], status_style)
 
         self.screen.refresh()
@@ -381,6 +421,7 @@ class OPMLBrowser:
         """
         Recalculate screen scrolling after movement.
         """
+        # determine where to go to
         if to is not None:
             if to == "start":
                 target = 0
@@ -389,16 +430,20 @@ class OPMLBrowser:
         elif rel is not None:
             target = self.top + self.cursor + rel
 
+        # check bounds of `target'
         target = min(target, len(self.flat)-1)
         target = max(target, 0)
         self.selected = self.flat[target][0]
 
+        # reached upper bound
         if target < self.top:
             self.top = target
             self.cursor = 0
-        elif target > self.top + self.maxy - 1:
-            self.top = target - (self.maxy - 2)
-            self.cursor = self.maxy - 2
+        # reached lower bound
+        elif target > self.top + self.maxy - 3 - self.status_ymargin:
+            self.top = target - (self.maxy - 3 - self.status_ymargin)
+            self.cursor = self.maxy - 3 - self.status_ymargin
+        # moving within bounds
         else:
             self.cursor = target - self.top
 
@@ -438,7 +483,8 @@ class OPMLBrowser:
                             command, stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL
                         )
-                        self.status = "Playing {}".format(self.selected.text)
+                        self.status = self.config["statusbar-text"].format(
+                            self.selected.text)
 
                 self.flat = self.root.flatten([])
                 self.move(rel=0)

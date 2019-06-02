@@ -23,5 +23,10 @@
     "selected-item": "inverted",
     "message": "yellow",
     "statusbar": "green-bg"
-  }
+  },
+  "opened_delimiter": "📁",
+  "closed_delimiter": "📂",
+  "statusbar-text": " ♫ {} ♫ ",
+  "outline-color": "green",
+  "title-color": "red"
 }
