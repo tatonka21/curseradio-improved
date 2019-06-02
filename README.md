@@ -3,7 +3,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/curseradio-improved.svg)
 
 ## Overview
-> An internet radio in the terminal.
+`curseradio-improved` is a web radio with an intuitive terminal-based user interface and `vi`-like key-bindings. Customizations can be done via a configuration file in `json` format.
 
 ![Screenshot](./assets/curseradio-improved.png)
 
