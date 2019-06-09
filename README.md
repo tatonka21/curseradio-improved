@@ -15,13 +15,13 @@ Audio playback uses [mpv](http://mpv.io/). `Curseradio-improved` requires `pytho
 Install the module from `PyPI`:
 ```bash
 pip3 install curseradio-improved
-curseradio-improved # tests the success installation
+curseradio-improved # tests the installation success
 ```
 
 You can also install `curseradio-improved` from source by cloning (or downloading the code from) this repository. Then type:
 ```bash
 make # might prompt for `sudo' password
-curseradio-improved # tests the success installation
+curseradio-improved # tests the installation success
 ```
 
 ## Settings
