@@ -18,6 +18,7 @@ from os import path
 import lxml.etree
 import requests
 import xdg.BaseDirectory
+from security import safe_command
 
 
 class OPMLNode:
@@ -479,8 +480,7 @@ class OPMLBrowser:
                             self.child.wait()
 
                         command = [self.config['playback']['command']] + msg
-                        self.child = subprocess.Popen(
-                            command, stdout=subprocess.DEVNULL,
+                        self.child = safe_command.run(subprocess.Popen, command, stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL
                         )
                         self.status = self.config["statusbar-text"].format(
