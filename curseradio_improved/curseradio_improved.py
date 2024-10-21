@@ -137,7 +137,7 @@ class OPMLAudio(OPMLNode):
 
     def activate(self):
         yield "Fetching playlist"
-        r = requests.get(self.url)
+        r = requests.get(self.url, timeout=60)
         playlist = r.text.split('\n')[0]
         yield [playlist]
 
