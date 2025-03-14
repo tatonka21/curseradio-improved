@@ -16,8 +16,8 @@ import subprocess
 from os import path
 
 import lxml.etree
-import requests
 import xdg.BaseDirectory
+from security import safe_requests
 
 
 class OPMLNode:
@@ -137,7 +137,7 @@ class OPMLAudio(OPMLNode):
 
     def activate(self):
         yield "Fetching playlist"
-        r = requests.get(self.url)
+        r = safe_requests.get(self.url)
         playlist = r.text.split('\n')[0]
         yield [playlist]
 
