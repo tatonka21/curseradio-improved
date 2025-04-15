@@ -33,7 +33,7 @@ class OPMLNode:
         """
         if attr is None:
             attr = {}
-        tree = lxml.etree.parse(url)
+        tree = lxml.etree.parse(url, parser=lxml.etree.XMLParser(resolve_entities=False))
         result = cls(text=text, attr=attr)
         result.children = [OPMLNode.from_element(o)
                            for o in tree.xpath("/opml/body/outline")]
